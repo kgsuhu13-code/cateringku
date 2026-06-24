@@ -11,12 +11,14 @@ export default function IndexPage() {
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      router.replace('/login');
+      router.replace('/login' as any);
     } else if (user) {
       if (user.role === 'CUSTOMER') {
-        router.replace('/customer');
+        router.replace('/customer' as any);
       } else if (user.role === 'TENANT') {
-        router.replace('/tenant');
+        router.replace('/tenant' as any);
+      } else if (user.role === 'SUPER_ADMIN') {
+        router.replace('/admin' as any);
       }
     }
   }, [isAuthenticated, user, isLoading, router]);

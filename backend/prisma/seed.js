@@ -2,14 +2,16 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Clearing database...');
+  print = console.log;
+  print('Clearing database...');
+  await prisma.review.deleteMany({});
   await prisma.orderItem.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.menu.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.tenant.deleteMany({});
 
-  console.log('Seeding tenants...');
+  print('Seeding tenants...');
   const tenantA = await prisma.tenant.create({
     data: {
       name: 'Warung Penyetan Bu Kris',
@@ -26,7 +28,7 @@ async function main() {
     },
   });
 
-  console.log('Seeding users...');
+  print('Seeding users...');
   // Seed a Tenant Owner for Tenant A
   const tenantUser = await prisma.user.create({
     data: {
@@ -35,6 +37,8 @@ async function main() {
       name: 'Hendra Owner Bu Kris',
       role: 'TENANT',
       tenantId: tenantA.id,
+      phone: '08567890123',
+      address: 'Warung Bu Kris Dharmawangsa',
     },
   });
 
@@ -45,6 +49,20 @@ async function main() {
       email: 'customer@gmail.com',
       name: 'Budi Raharjo',
       role: 'CUSTOMER',
+      phone: '081234567890',
+      address: 'Kost Asri Kamar 3, Sukolilo, Surabaya',
+    },
+  });
+
+  // Seed Super Admin
+  const adminUser = await prisma.user.create({
+    data: {
+      firebaseUid: 'mock_admin_uid_123',
+      email: 'admin@gmail.com',
+      name: 'Pak Rektor Admin',
+      role: 'SUPER_ADMIN',
+      phone: '08999999999',
+      address: 'Kantor Rektorat Lt. 2',
     },
   });
 
@@ -52,9 +70,9 @@ async function main() {
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
-  console.log(`Dates generated: Today = ${today}, Tomorrow = ${tomorrow}`);
+  print(`Dates generated: Today = ${today}, Tomorrow = ${tomorrow}`);
 
-  console.log('Seeding menus...');
+  print('Seeding menus...');
   // Menus for Tenant A (Warung Penyetan Bu Kris)
   const menuA1 = await prisma.menu.create({
     data: {
@@ -90,7 +108,7 @@ async function main() {
   });
 
   // Menus for Tenant B (Dapur Sehat Organik)
-  await prisma.menu.create({
+  const menuB1 = await prisma.menu.create({
     data: {
       tenantId: tenantB.id,
       name: 'Fruit Salad Premium Extra Cheese',
@@ -112,7 +130,7 @@ async function main() {
     },
   });
 
-  console.log('Seeding a mock paid order for testing...');
+  print('Seeding a mock paid order for testing...');
   await prisma.order.create({
     data: {
       customerId: customerUser.id,
@@ -120,6 +138,8 @@ async function main() {
       totalAmount: 18000,
       paymentStatus: 'PAID',
       status: 'PAID',
+      shippingAddress: customerUser.address,
+      deliveryTime: '12:00',
       orderItems: {
         create: [
           {
@@ -132,7 +152,26 @@ async function main() {
     }
   });
 
-  console.log('Seeding completed successfully!');
+  print('Seeding reviews...');
+  await prisma.review.create({
+    data: {
+      customerId: customerUser.id,
+      menuId: menuA1.id,
+      rating: 5,
+      comment: 'Sambal koreknya nampol banget, ayamnya renyah pol!',
+    }
+  });
+
+  await prisma.review.create({
+    data: {
+      customerId: customerUser.id,
+      menuId: menuB1.id,
+      rating: 4,
+      comment: 'Buah-buahan segar, keju melimpah. Mantap!',
+    }
+  });
+
+  print('Seeding completed successfully!');
 }
 
 main()

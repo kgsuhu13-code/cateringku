@@ -43,8 +43,9 @@ export default function LoginScreen() {
 
     const user = await loginMock(email, name, role);
     if (user) {
-      if (user.role === 'CUSTOMER') router.replace('/customer');
-      else if (user.role === 'TENANT') router.replace('/tenant');
+      if (user.role === 'CUSTOMER') router.replace('/customer' as any);
+      else if (user.role === 'TENANT') router.replace('/tenant' as any);
+      else if (user.role === 'SUPER_ADMIN') router.replace('/admin' as any);
     }
   };
 
@@ -59,8 +60,9 @@ export default function LoginScreen() {
 
     const user = await loginMock(demoEmail, demoName, demoRole);
     if (user) {
-      if (user.role === 'CUSTOMER') router.replace('/customer');
-      else if (user.role === 'TENANT') router.replace('/tenant');
+      if (user.role === 'CUSTOMER') router.replace('/customer' as any);
+      else if (user.role === 'TENANT') router.replace('/tenant' as any);
+      else if (user.role === 'SUPER_ADMIN') router.replace('/admin' as any);
     }
   };
 

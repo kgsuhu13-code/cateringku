@@ -82,6 +82,8 @@ export const api = {
       quantity: number;
       targetDate: string;
     }>;
+    shippingAddress?: string;
+    deliveryTime?: string;
   }) => {
     return request('/orders', {
       method: 'POST',
@@ -121,6 +123,27 @@ export const api = {
     });
   },
 
+  // Tenant: Update daily menu
+  updateTenantMenu: async (menuId: string, menuData: {
+    name?: string;
+    description?: string;
+    price?: number;
+    maxQuota?: number;
+    availableAt?: string;
+  }) => {
+    return request(`/tenant/menus/${menuId}`, {
+      method: 'PUT',
+      body: JSON.stringify(menuData),
+    });
+  },
+
+  // Tenant: Delete daily menu
+  deleteTenantMenu: async (menuId: string) => {
+    return request(`/tenant/menus/${menuId}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Tenant: Get kitchen rekap
   getKitchenRekap: async (date: string) => {
     return request(`/tenant/kitchen-rekap?date=${date}`);
@@ -142,5 +165,70 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     });
+  },
+
+  // User Profile
+  getUserProfile: async () => {
+    return request('/users/profile');
+  },
+
+  updateUserProfile: async (profileData: {
+    name?: string;
+    phone?: string;
+    address?: string;
+  }) => {
+    return request('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  // Reviews
+  createReview: async (reviewData: {
+    menuId: string;
+    rating: number;
+    comment?: string;
+  }) => {
+    return request('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(reviewData),
+    });
+  },
+
+  getMenuReviews: async (menuId: string) => {
+    return request(`/menus/${menuId}/reviews`);
+  },
+
+  getTenantReviews: async () => {
+    return request('/tenant/reviews');
+  },
+
+  deleteReview: async (reviewId: string) => {
+    return request(`/reviews/${reviewId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Admin Endpoints
+  getAdminStats: async () => {
+    return request('/admin/stats');
+  },
+
+  getAdminUsers: async () => {
+    return request('/admin/users');
+  },
+
+  updateUserRole: async (userId: string, roleData: {
+    role: 'CUSTOMER' | 'TENANT' | 'SUPER_ADMIN';
+    tenantId?: string | null;
+  }) => {
+    return request(`/admin/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify(roleData),
+    });
+  },
+
+  getAdminTenants: async () => {
+    return request('/admin/tenants');
   },
 };

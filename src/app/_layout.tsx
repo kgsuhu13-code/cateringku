@@ -6,7 +6,7 @@ import '../global.css';
 import { useAuthStore } from '../hooks/useAuthStore';
 
 // Protected routes that require authentication
-const PROTECTED_SEGMENTS = ['customer', 'tenant', 'payment-simulator', 'payment-status'];
+const PROTECTED_SEGMENTS = ['customer', 'tenant', 'admin', 'payment-simulator', 'payment-status'];
 
 function AuthGuard() {
   const router = useRouter();
@@ -36,8 +36,10 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
         <Stack.Screen name="register" />
+        <Stack.Screen name="forgot-password" />
         <Stack.Screen name="customer" />
         <Stack.Screen name="tenant" />
+        <Stack.Screen name="admin" />
         <Stack.Screen name="payment-simulator" options={{ presentation: 'modal' }} />
         <Stack.Screen name="payment-status" />
       </Stack>
