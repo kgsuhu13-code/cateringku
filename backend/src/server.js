@@ -32,6 +32,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check for Railway
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Catering backend is running' });
+});
+
 // Helper function to create user notifications
 async function createNotification(userId, type, title, body) {
   try {
