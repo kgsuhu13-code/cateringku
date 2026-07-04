@@ -39,7 +39,9 @@ interface AuthState {
   loginMock: (email: string, name: string, role: 'CUSTOMER' | 'TENANT', tenantId?: string) => Promise<User | null>;
   logout: () => void;
   setError: (error: string | null) => void;
+  updateUser: (user: Partial<User>) => void;
 }
+
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -95,6 +97,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setError: (error) => set({ error }),
+      updateUser: (updatedUser) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updatedUser } : null,
+        }));
+      },
     }),
     {
       name: 'auth-storage',

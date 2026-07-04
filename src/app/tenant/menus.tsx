@@ -23,7 +23,7 @@ interface Menu {
   availableAt: string;
 }
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function TenantMenus() {
   const router = useRouter();

@@ -4,9 +4,8 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
-  FlatList,
 } from 'react-native';
+import Skeleton from '../../components/Skeleton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { api } from '../../hooks/api';
 import { StatusBar } from 'expo-status-bar';
@@ -31,7 +30,7 @@ interface Review {
   menu: { name: string };
 }
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function TenantDetail() {
   const router = useRouter();
@@ -95,9 +94,26 @@ export default function TenantDetail() {
       </View>
 
       {loading ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color={GREEN} />
-        </View>
+        <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+          {/* Shop Card Skeleton */}
+          <View className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-5 mb-4">
+            <View className="flex-row items-center">
+              <Skeleton width={56} height={56} borderRadius={16} className="mr-4" />
+              <View className="flex-1 gap-2">
+                <Skeleton width="60%" height={18} borderRadius={6} />
+                <Skeleton width="30%" height={12} borderRadius={4} />
+              </View>
+            </View>
+            <Skeleton.Text lines={2} className="mt-4" />
+          </View>
+          
+          {/* Menus List Skeleton */}
+          <View className="mt-4">
+            <Skeleton width="45%" height={18} borderRadius={6} className="mb-4" />
+            <Skeleton.MenuItem />
+            <Skeleton.MenuItem />
+          </View>
+        </ScrollView>
       ) : (
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           {/* Shop Card */}
@@ -138,7 +154,16 @@ export default function TenantDetail() {
               menus.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  onPress={() => router.push({ pathname: '/customer/menu-detail' as any, params: { id: item.id, name: item.name, price: item.price.toString() } })}
+                  onPress={() => router.push({ 
+                    pathname: '/customer/menu-detail' as any, 
+                    params: { 
+                      id: item.id, 
+                      name: item.name, 
+                      price: item.price.toString(),
+                      tenantId: id as string,
+                      tenantName: name as string
+                    } 
+                  })}
                   activeOpacity={0.8}
                   className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 mb-3 flex-row items-center shadow-sm"
                 >

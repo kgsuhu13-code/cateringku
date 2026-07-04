@@ -1,9 +1,26 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { ThemeProvider, DefaultTheme, DarkTheme } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 import { useEffect } from 'react';
 import '../global.css';
 import { useAuthStore } from '../hooks/useAuthStore';
+import CustomAlert from '../components/CustomAlert';
+
+// Inject modern Google Font dynamically on Web
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap';
+  document.head.appendChild(link);
+
+  const style = document.createElement('style');
+  style.textContent = `
+    body, input, textarea, button, select, span, div, p, a, h1, h2, h3, h4, h5, h6 {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 // Protected routes that require authentication
 const PROTECTED_SEGMENTS = ['customer', 'tenant', 'admin', 'payment-simulator', 'payment-status'];
@@ -11,7 +28,7 @@ const PROTECTED_SEGMENTS = ['customer', 'tenant', 'admin', 'payment-simulator', 
 function AuthGuard() {
   const router = useRouter();
   const segments = useSegments();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
     const currentSegment = segments[0] as string | undefined;
@@ -20,8 +37,20 @@ function AuthGuard() {
     if (isProtected && !isAuthenticated) {
       // Not logged in but trying to access protected page → redirect to login
       router.replace('/login');
+      return;
     }
-  }, [segments, isAuthenticated]);
+
+    if (isAuthenticated && user) {
+      // Prevent role cross-access
+      if (user.role === 'CUSTOMER' && (currentSegment === 'tenant' || currentSegment === 'admin')) {
+        router.replace('/customer/home');
+      } else if (user.role === 'TENANT' && (currentSegment === 'customer' || currentSegment === 'admin')) {
+        router.replace('/tenant/dashboard');
+      } else if (user.role === 'SUPER_ADMIN' && (currentSegment === 'customer' || currentSegment === 'tenant')) {
+        router.replace('/admin/dashboard');
+      }
+    }
+  }, [segments, isAuthenticated, user]);
 
   return null;
 }
@@ -43,6 +72,7 @@ export default function RootLayout() {
         <Stack.Screen name="payment-simulator" options={{ presentation: 'modal' }} />
         <Stack.Screen name="payment-status" />
       </Stack>
+      <CustomAlert />
     </ThemeProvider>
   );
 }

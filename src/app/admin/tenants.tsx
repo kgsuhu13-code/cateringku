@@ -14,7 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Store, Plus, MapPin, X } from 'lucide-react-native';
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function AdminTenants() {
   const [tenants, setTenants] = useState<any[]>([]);

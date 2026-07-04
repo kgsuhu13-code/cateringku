@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
+import Skeleton from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../hooks/useAuthStore';
 import { api } from '../../hooks/api';
@@ -22,6 +24,9 @@ import {
   UtensilsCrossed,
   Package,
   LogOut,
+  Gift,
+  Percent,
+  Sparkles,
 } from 'lucide-react-native';
 
 interface Tenant {
@@ -31,9 +36,73 @@ interface Tenant {
   address?: string;
 }
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
+
+const PROMOS = [
+  {
+    id: 1,
+    tag: 'Promo Hari Ini',
+    title: 'Gratis Ongkir Kampus',
+    desc: 'Min. belanja Rp 50.000 untuk pengiriman area kampus.',
+    bgColor: '#16a34a',
+    icon: UtensilsCrossed,
+  },
+  {
+    id: 2,
+    tag: 'Pengguna Baru',
+    title: 'Diskon 20% Pertama',
+    desc: 'Pakai kode voucher CATERINGKU untuk pesanan pertama Anda.',
+    bgColor: '#f59e0b',
+    icon: Gift,
+  },
+  {
+    id: 3,
+    tag: 'Langganan Hemat',
+    title: 'Catering Mingguan',
+    desc: 'Hemat s/d 15% dengan berlangganan paket mingguan/bulanan.',
+    bgColor: '#4f46e5',
+    icon: Percent,
+  },
+  {
+    id: 4,
+    tag: 'Rekomendasi Siang',
+    title: 'Diskon Kopi & Boba',
+    desc: 'Potongan Rp 5.000 khusus menu minuman jam 12:00 - 13:00.',
+    bgColor: '#db2777',
+    icon: Sparkles,
+  },
+];
 
 export default function CustomerHome() {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const handleScroll = (event: any) => {
+    const slideWidth = event.nativeEvent.layoutMeasurement.width;
+    const offset = event.nativeEvent.contentOffset.x;
+    const active = Math.round(offset / slideWidth);
+    if (active !== activeSlide) {
+      setActiveSlide(active);
+    }
+  };
+
+  // Auto-slide every 5 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      let nextSlide = activeSlide + 1;
+      if (nextSlide >= PROMOS.length) {
+        nextSlide = 0;
+      }
+      const slideWidth = Dimensions.get('window').width - 32 + 12;
+      scrollViewRef.current?.scrollTo({
+        x: nextSlide * slideWidth,
+        animated: true,
+      });
+      setActiveSlide(nextSlide);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [activeSlide]);
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -126,15 +195,60 @@ export default function CustomerHome() {
           </View>
         </View>
 
-        {/* Promo Banner */}
-        <View className="mx-4 mb-5 bg-green-600 rounded-3xl p-5 flex-row items-center justify-between overflow-hidden">
-          <View className="flex-1">
-            <Text className="text-green-100 text-xs font-semibold mb-1">Promo Hari Ini</Text>
-            <Text className="text-white text-base font-extrabold">Gratis Ongkir</Text>
-            <Text className="text-green-100 text-xs mt-0.5">Min. 2 porsi catering harian</Text>
-          </View>
-          <View className="w-16 h-16 bg-white/20 rounded-2xl items-center justify-center">
-            <UtensilsCrossed size={32} color="white" strokeWidth={1.5} />
+        {/* Promo Carousel */}
+        <View className="mb-6">
+          <ScrollView
+            ref={scrollViewRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+            decelerationRate="fast"
+            snapToInterval={Dimensions.get('window').width - 32 + 12}
+            snapToAlignment="center"
+          >
+            {PROMOS.map((promo) => {
+              const Icon = promo.icon;
+              return (
+                <View
+                  key={promo.id}
+                  style={{
+                    width: Dimensions.get('window').width - 32,
+                    backgroundColor: promo.bgColor,
+                  }}
+                  className="mr-3 rounded-3xl p-5 flex-row items-center justify-between overflow-hidden"
+                >
+                  <View className="flex-1 pr-3">
+                    <Text className="text-white/80 text-[10px] font-bold uppercase tracking-wider mb-1">
+                      {promo.tag}
+                    </Text>
+                    <Text className="text-white text-base font-black">
+                      {promo.title}
+                    </Text>
+                    <Text className="text-white/90 text-xs mt-1 leading-4" numberOfLines={2}>
+                      {promo.desc}
+                    </Text>
+                  </View>
+                  <View className="w-14 h-14 bg-white/20 rounded-2xl items-center justify-center">
+                    <Icon size={26} color="white" strokeWidth={2} />
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+
+          {/* Dots Indicator */}
+          <View className="flex-row justify-center gap-1.5 mt-3">
+            {PROMOS.map((_, idx) => (
+              <View
+                key={idx}
+                className={`h-1.5 rounded-full ${
+                  activeSlide === idx ? 'w-5 bg-green-600' : 'w-1.5 bg-slate-200 dark:bg-slate-800'
+                }`}
+              />
+            ))}
           </View>
         </View>
 
@@ -146,8 +260,10 @@ export default function CustomerHome() {
           </View>
 
           {loading ? (
-            <View className="items-center py-10">
-              <ActivityIndicator size="large" color={GREEN} />
+            <View>
+              <Skeleton.TenantItem />
+              <Skeleton.TenantItem />
+              <Skeleton.TenantItem />
             </View>
           ) : tenants.length === 0 ? (
             <View className="items-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">

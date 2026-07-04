@@ -1,25 +1,40 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
+import { Platform, useColorScheme } from 'react-native';
 import { ChefHat, UtensilsCrossed, ClipboardList, Star, Settings } from 'lucide-react-native';
 
 export default function TenantLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const activeColor = '#16a34a'; // Green brand
+  const inactiveColor = isDark ? '#94a3b8' : '#64748b'; // Slate
+  const bgColor = isDark ? '#0f172a' : '#ffffff'; // Slate-900 / White
+  const borderColor = isDark ? '#1e293b' : '#f1f5f9'; // Border line
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#16a34a',
-        tabBarInactiveTintColor: '#64748b',
+        tabBarActiveTintColor: activeColor,
+        tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#e2e8f0',
-          height: 60,
-          paddingBottom: 8,
+          borderTopColor: borderColor,
+          height: Platform.OS === 'ios' ? 92 : 78,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
           paddingTop: 8,
-          backgroundColor: '#ffffff',
+          backgroundColor: bgColor,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: isDark ? 0.25 : 0.04,
+          shadowRadius: 12,
+          elevation: 10,
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontWeight: '700',
+          marginTop: 0,
         },
       }}
     >
@@ -85,6 +100,12 @@ export default function TenantLayout() {
       />
       <Tabs.Screen
         name="notifications"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="index"
         options={{
           href: null,
         }}

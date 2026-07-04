@@ -7,7 +7,23 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (
+      !origin ||
+      origin.startsWith('http://localhost') ||
+      origin.startsWith('http://127.0.0.1') ||
+      origin.endsWith('.trycloudflare.com')
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Log requests
@@ -15,6 +31,22 @@ app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
+
+// Helper function to create user notifications
+async function createNotification(userId, type, title, body) {
+  try {
+    await prisma.notification.create({
+      data: {
+        userId,
+        type,
+        title,
+        body
+      }
+    });
+  } catch (error) {
+    console.error('Error creating notification:', error);
+  }
+}
 
 // ==========================================
 // 1. Auth & User Sync
@@ -50,15 +82,22 @@ app.post('/api/auth/sync', async (req, res) => {
     });
 
     if (user) {
+      // Prevent Mitra logging in as Customer, and vice versa
+      if (user.role !== finalRole && user.role !== 'SUPER_ADMIN') {
+        const readableRole = user.role === 'TENANT' ? 'Mitra Catering' : 'Customer';
+        return res.status(400).json({
+          error: `Akun ini terdaftar sebagai ${readableRole}. Silakan masuk sebagai ${readableRole}.`
+        });
+      }
+
       // Update existing user, mapping them to the new firebaseUid/email
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
           firebaseUid,
           email,
-          name,
-          role: finalRole,
-          tenantId: finalRole === 'TENANT' ? tenantId : null,
+          name: user.name || name,
+          tenantId: finalRole === 'TENANT' ? (tenantId || user.tenantId) : null,
         },
         include: {
           tenant: true,
@@ -324,6 +363,11 @@ app.patch('/api/orders/:id/pay', verifyToken, async (req, res) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
+    // Verify ownership or admin privilege
+    if (order.customerId !== req.user.id && req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Forbidden: You do not own this order' });
+    }
+
     // Double check quota if status changes to PAID
     if (status === 'PAID') {
       for (const item of order.orderItems) {
@@ -373,6 +417,28 @@ app.patch('/api/orders/:id/pay', verifyToken, async (req, res) => {
         status: status === 'PAID' ? 'PAID' : 'CANCELLED'
       },
     });
+
+    // Notification Trigger: Notify Tenant when order is paid
+    if (status === 'PAID') {
+      try {
+        const customerUser = await prisma.user.findUnique({
+          where: { id: order.customerId }
+        });
+        const tenantUsers = await prisma.user.findMany({
+          where: { tenantId: order.tenantId }
+        });
+        for (const tUser of tenantUsers) {
+          await createNotification(
+            tUser.id,
+            'NEW_ORDER',
+            'Pesanan Baru Masuk! 📦',
+            `Pesanan dari ${customerUser?.name || 'Customer'} telah dibayar. Siapkan bahan masakan sekarang!`
+          );
+        }
+      } catch (err) {
+        console.error('Failed to send new order notification:', err);
+      }
+    }
 
     res.json(updatedOrder);
   } catch (error) {
@@ -526,6 +592,39 @@ app.patch('/api/tenant/orders/:id/status', verifyToken, requireTenant, async (re
       data: { status },
     });
 
+    // Notification Trigger: Notify Customer on order status update
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: order.tenantId }
+      });
+      let readableStatus = '';
+      let icon = '🛵';
+      if (status === 'PREPARING') {
+        readableStatus = 'sedang diproses/dimasak';
+        icon = '🍳';
+      } else if (status === 'SHIPPED') {
+        readableStatus = 'sedang dalam pengiriman';
+        icon = '🛵';
+      } else if (status === 'COMPLETED') {
+        readableStatus = 'telah selesai ditandai';
+        icon = '🎉';
+      } else if (status === 'CANCELLED') {
+        readableStatus = 'telah dibatalkan oleh mitra';
+        icon = '❌';
+      }
+
+      if (readableStatus) {
+        await createNotification(
+          order.customerId,
+          'ORDER_STATUS',
+          `Update Status Pesanan ${icon}`,
+          `Pesanan Anda dari ${tenant?.name || 'Mitra'} ${readableStatus}.`
+        );
+      }
+    } catch (err) {
+      console.error('Failed to send status update notification:', err);
+    }
+
     res.json(updatedOrder);
   } catch (error) {
     console.error('Error updating order status:', error);
@@ -677,6 +776,58 @@ app.put('/api/users/profile', verifyToken, async (req, res) => {
   }
 });
 
+// GET /api/notifications : Get current user's notifications
+app.get('/api/notifications', verifyToken, async (req, res) => {
+  try {
+    const notifications = await prisma.notification.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(notifications);
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// POST /api/notifications/:id/read : Mark a notification as read
+app.post('/api/notifications/:id/read', verifyToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const notification = await prisma.notification.findUnique({
+      where: { id }
+    });
+
+    if (!notification || notification.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden or not found' });
+    }
+
+    const updated = await prisma.notification.update({
+      where: { id },
+      data: { isRead: true }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ error: 'Failed to mark notification as read' });
+  }
+});
+
+// POST /api/notifications/read-all : Mark all notifications as read for current user
+app.post('/api/notifications/read-all', verifyToken, async (req, res) => {
+  try {
+    const result = await prisma.notification.updateMany({
+      where: { userId: req.user.id, isRead: false },
+      data: { isRead: true }
+    });
+    res.json({ success: true, count: result.count });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({ error: 'Failed to mark all notifications as read' });
+  }
+});
+
 // ==========================================
 // 7. Review (Ulasan) Endpoints
 // ==========================================
@@ -708,6 +859,28 @@ app.post('/api/reviews', verifyToken, requireCustomer, async (req, res) => {
         customer: true
       }
     });
+
+    // Notification Trigger: Notify Tenant on new review
+    try {
+      const menu = await prisma.menu.findUnique({
+        where: { id: menuId }
+      });
+      if (menu) {
+        const tenantUsers = await prisma.user.findMany({
+          where: { tenantId: menu.tenantId }
+        });
+        for (const tUser of tenantUsers) {
+          await createNotification(
+            tUser.id,
+            'NEW_REVIEW',
+            `Ulasan Bintang ${numericRating} Baru! ⭐`,
+            `${req.user.name} memberikan ulasan: "${comment || 'Tanpa komentar'}"`
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Failed to send review notification:', err);
+    }
 
     res.status(201).json(newReview);
   } catch (error) {

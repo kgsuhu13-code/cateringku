@@ -49,22 +49,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleQuickDemo = async (type: 'customer' | 'tenant') => {
-    const isCustomer = type === 'customer';
-    const demoEmail = isCustomer ? 'customer@gmail.com' : 'tenant@gmail.com';
-    const demoName = isCustomer ? 'Budi Raharjo' : 'Hendra Owner Penyetan';
-    const demoRole: 'CUSTOMER' | 'TENANT' = isCustomer ? 'CUSTOMER' : 'TENANT';
-
-    setEmail(demoEmail);
-    setRole(demoRole);
-
-    const user = await loginMock(demoEmail, demoName, demoRole);
-    if (user) {
-      if (user.role === 'CUSTOMER') router.replace('/customer' as any);
-      else if (user.role === 'TENANT') router.replace('/tenant' as any);
-      else if (user.role === 'SUPER_ADMIN') router.replace('/admin' as any);
-    }
-  };
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-slate-950">
@@ -246,42 +230,7 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* Divider */}
-            <View className="flex-row items-center my-4">
-              <View className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
-              <Text className="text-slate-300 dark:text-slate-600 text-xs px-4 font-semibold">
-                ATAU COBA DEMO
-              </Text>
-              <View className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
-            </View>
 
-            {/* Quick Demo Buttons */}
-            <View className="flex-row gap-3 mb-8">
-              <TouchableOpacity
-                onPress={() => handleQuickDemo('customer')}
-                activeOpacity={0.8}
-                accessibilityLabel="Demo sebagai Customer"
-                accessibilityRole="button"
-                className="flex-1 border-2 border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/30 h-[48px] rounded-2xl items-center justify-center flex-row gap-2"
-              >
-                <User size={14} color="#16a34a" strokeWidth={2.5} />
-                <Text className="text-green-700 dark:text-green-400 font-bold text-xs">
-                  Customer Demo
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleQuickDemo('tenant')}
-                activeOpacity={0.8}
-                accessibilityLabel="Demo sebagai Mitra Catering"
-                accessibilityRole="button"
-                className="flex-1 border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 h-[48px] rounded-2xl items-center justify-center flex-row gap-2"
-              >
-                <Store size={14} color="#64748b" strokeWidth={2.5} />
-                <Text className="text-slate-600 dark:text-slate-300 font-bold text-xs">
-                  Mitra Demo
-                </Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

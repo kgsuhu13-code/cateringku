@@ -5,8 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
+import Skeleton from '../../components/Skeleton';
+import { customAlert } from '../../components/CustomAlert';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../../hooks/useAuthStore';
 import { useCartStore } from '../../hooks/useCartStore';
@@ -36,7 +37,7 @@ interface Menu {
   remainingQuota?: number;
 }
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function CustomerCalendar() {
   const router = useRouter();
@@ -101,7 +102,7 @@ export default function CustomerCalendar() {
     const remaining = menu.remainingQuota !== undefined ? menu.remainingQuota : menu.maxQuota;
     
     if (currentQty >= remaining) {
-      Alert.alert('Gagal', 'Stok/Quota tidak mencukupi untuk ditambahkan ke keranjang.');
+      customAlert.error('Gagal', 'Stok/Quota tidak mencukupi untuk ditambahkan ke keranjang.');
       return;
     }
 
@@ -110,11 +111,11 @@ export default function CustomerCalendar() {
     if (success) {
       showToast(`${menu.name} ditambahkan ke keranjang`);
       if (clearedPrevious) {
-        Alert.alert('Perhatian', 'Keranjang dari catering sebelumnya telah dihapus.');
+        customAlert.warning('Perhatian', 'Keranjang dari catering sebelumnya telah dihapus.');
       }
       loadMenus();
     } else {
-      Alert.alert('Gagal', 'Stok/Quota tidak mencukupi.');
+      customAlert.error('Gagal', 'Stok/Quota tidak mencukupi.');
     }
   };
 
@@ -212,8 +213,9 @@ export default function CustomerCalendar() {
         </View>
 
         {loading ? (
-          <View className="items-center py-16">
-            <ActivityIndicator size="large" color={GREEN} />
+          <View>
+            <Skeleton.MenuItem />
+            <Skeleton.MenuItem />
           </View>
         ) : menus.length === 0 ? (
           <View className="items-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
@@ -232,7 +234,16 @@ export default function CustomerCalendar() {
                 className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 mb-3 shadow-sm shadow-slate-100 dark:shadow-none"
               >
                 <TouchableOpacity
-                  onPress={() => router.push({ pathname: '/customer/menu-detail' as any, params: { id: m.id, name: m.name, price: m.price.toString() } })}
+                  onPress={() => router.push({ 
+                    pathname: '/customer/menu-detail' as any, 
+                    params: { 
+                      id: m.id, 
+                      name: m.name, 
+                      price: m.price.toString(),
+                      tenantId: m.tenantId,
+                      tenantName: selectedTenant?.name || 'Catering'
+                    } 
+                  })}
                   activeOpacity={0.9}
                   className="flex-row items-start"
                 >

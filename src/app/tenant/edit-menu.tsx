@@ -14,7 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, UtensilsCrossed, Calendar, Hash, BookOpen } from 'lucide-react-native';
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function EditMenu() {
   const router = useRouter();

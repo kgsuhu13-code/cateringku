@@ -5,8 +5,8 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
+import { customAlert } from '../../components/CustomAlert';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { api } from '../../hooks/api';
 import { useCartStore } from '../../hooks/useCartStore';
@@ -22,11 +22,11 @@ interface Review {
   customer: { name: string };
 }
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function MenuDetail() {
   const router = useRouter();
-  const { id, name, price } = useLocalSearchParams();
+  const { id, name, price, tenantId, tenantName } = useLocalSearchParams();
   const cart = useCartStore();
 
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -63,17 +63,17 @@ export default function MenuDetail() {
       price: parsedPrice,
       maxQuota: 10,
       availableAt: new Date().toISOString().split('T')[0],
-      tenantId: '',
+      tenantId: (tenantId as string) || '',
     };
     
     // Add to cart with today's date
     const today = new Date().toISOString().split('T')[0];
-    const { success } = cart.addToCart(mockMenu, 1, today, 'Catering');
+    const { success } = cart.addToCart(mockMenu, 1, today, (tenantName as string) || 'Catering');
     if (success) {
-      Alert.alert('Sukses', `${name} dimasukkan ke keranjang untuk pengiriman hari ini.`);
+      customAlert.success('Sukses', `${name} dimasukkan ke keranjang untuk pengiriman hari ini.`);
       router.push('/customer/cart' as any);
     } else {
-      Alert.alert('Gagal', 'Quota sudah habis.');
+      customAlert.error('Gagal', 'Quota sudah habis.');
     }
   };
 

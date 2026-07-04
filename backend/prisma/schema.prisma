@@ -1,6 +1,6 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -19,6 +19,7 @@ model User {
   tenant      Tenant?  @relation(fields: [tenantId], references: [id])
   orders      Order[]
   reviews     Review[]
+  notifications Notification[]
   createdAt   DateTime @default(now())
 }
 
@@ -80,5 +81,16 @@ model Review {
   rating     Int      // 1 to 5
   comment    String?
   createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // "NEW_ORDER", "ORDER_STATUS", "NEW_REVIEW"
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 

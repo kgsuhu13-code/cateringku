@@ -30,7 +30,7 @@ interface TenantOrderDetailData {
   }>;
 }
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function TenantOrderDetail() {
   const router = useRouter();
@@ -96,7 +96,11 @@ export default function TenantOrderDetail() {
         <Text className="text-white text-lg font-extrabold flex-1">Proses Pesanan</Text>
       </View>
 
-      <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 p-4"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 140 }}
+      >
         {/* Status Card */}
         <View className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 mb-4 shadow-sm">
           <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Status Pemesanan Masuk</Text>

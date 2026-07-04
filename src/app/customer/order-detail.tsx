@@ -31,7 +31,7 @@ interface OrderDetailData {
   }>;
 }
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function CustomerOrderDetail() {
   const router = useRouter();

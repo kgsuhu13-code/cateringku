@@ -7,11 +7,22 @@ export const setAuthToken = (token: string | null) => {
 };
 
 const getBaseUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
   // Android Emulator maps localhost to 10.0.2.2
   if (Platform.OS === 'android') {
     return 'http://10.0.2.2:5000/api';
   }
-  // Web or iOS Simulator
+  // Web: resolve current hostname dynamically (e.g. for testing on phone via Wi-Fi IP)
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      const protocol = window.location.protocol;
+      return `${protocol}//${hostname}:5000/api`;
+    }
+  }
+  // Web or iOS Simulator default
   return 'http://localhost:5000/api';
 };
 
@@ -230,5 +241,22 @@ export const api = {
 
   getAdminTenants: async () => {
     return request('/admin/tenants');
+  },
+
+  // Notifications Endpoints
+  getNotifications: async () => {
+    return request('/notifications');
+  },
+
+  markNotificationRead: async (id: string) => {
+    return request(`/notifications/${id}/read`, {
+      method: 'POST',
+    });
+  },
+
+  markAllNotificationsRead: async () => {
+    return request('/notifications/read-all', {
+      method: 'POST',
+    });
   },
 };

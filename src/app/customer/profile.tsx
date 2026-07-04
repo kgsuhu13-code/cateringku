@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import Skeleton from '../../components/Skeleton';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../hooks/useAuthStore';
 import { api } from '../../hooks/api';
@@ -13,7 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Phone, MapPin, Mail, LogOut, Edit3, ShieldAlert } from 'lucide-react-native';
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function CustomerProfile() {
   const router = useRouter();
@@ -53,9 +54,46 @@ export default function CustomerProfile() {
       </View>
 
       {loading ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color={GREEN} />
-        </View>
+        <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+          {/* Avatar Section Skeleton */}
+          <View className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 mb-4 items-center shadow-sm">
+            <Skeleton width={64} height={64} borderRadius={32} className="mb-3" />
+            <Skeleton width="40%" height={16} borderRadius={6} className="mb-2" />
+            <Skeleton width="15%" height={11} borderRadius={4} />
+          </View>
+
+          {/* Account Details Skeleton */}
+          <View className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 mb-4 shadow-sm gap-4">
+            <Skeleton width="35%" height={15} borderRadius={6} className="mb-2" />
+            
+            {/* Row 1 */}
+            <View className="flex-row items-center">
+              <Skeleton width={18} height={18} borderRadius={4} className="mr-3" />
+              <View className="flex-1 gap-1.5">
+                <Skeleton width="15%" height={9} borderRadius={3} />
+                <Skeleton width="60%" height={12} borderRadius={4} />
+              </View>
+            </View>
+
+            {/* Row 2 */}
+            <View className="flex-row items-center border-t border-slate-50 dark:border-slate-850 pt-3">
+              <Skeleton width={18} height={18} borderRadius={4} className="mr-3" />
+              <View className="flex-1 gap-1.5">
+                <Skeleton width="20%" height={9} borderRadius={3} />
+                <Skeleton width="40%" height={12} borderRadius={4} />
+              </View>
+            </View>
+
+            {/* Row 3 */}
+            <View className="flex-row items-start border-t border-slate-50 dark:border-slate-850 pt-3">
+              <Skeleton width={18} height={18} borderRadius={4} className="mr-3 mt-1" />
+              <View className="flex-1 gap-1.5">
+                <Skeleton width="25%" height={9} borderRadius={3} />
+                <Skeleton width="85%" height={12} borderRadius={4} />
+              </View>
+            </View>
+          </View>
+        </ScrollView>
       ) : (
         <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
           {/* Avatar Section */}

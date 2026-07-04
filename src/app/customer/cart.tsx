@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
+import { customAlert } from '../../components/CustomAlert';
 import { useRouter } from 'expo-router';
 import { useCartStore } from '../../hooks/useCartStore';
+import { api } from '../../hooks/api';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -18,11 +21,72 @@ import {
   Plus,
 } from 'lucide-react-native';
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function CustomerCart() {
   const router = useRouter();
   const cart = useCartStore();
+
+  useEffect(() => {
+    const validateCartItems = async () => {
+      if (cart.items.length === 0 || !cart.tenantId) return;
+
+      try {
+        const uniqueDates = Array.from(new Set(cart.items.map((item: any) => item.targetDate)));
+        let hasChanges = false;
+        const validatedItems = [...cart.items];
+
+        for (const date of uniqueDates) {
+          const serverMenus = await api.getTenantMenus(cart.tenantId, date);
+          const dateItems = validatedItems.filter((item: any) => item.targetDate === date);
+          
+          for (const item of dateItems) {
+            const serverMenu = serverMenus.find((m: any) => m.id === item.menu.id);
+            if (!serverMenu) {
+              // Menu no longer exists, remove it
+              const index = validatedItems.findIndex((vi: any) => vi.menu.id === item.menu.id && vi.targetDate === date);
+              if (index > -1) {
+                validatedItems.splice(index, 1);
+                hasChanges = true;
+              }
+            } else {
+              // Update price/quota if modified
+              const serverPrice = serverMenu.price;
+              const serverQuota = serverMenu.remainingQuota !== undefined ? serverMenu.remainingQuota : serverMenu.maxQuota;
+              if (item.menu.price !== serverPrice || item.menu.remainingQuota !== serverQuota) {
+                const index = validatedItems.findIndex((vi: any) => vi.menu.id === item.menu.id && vi.targetDate === date);
+                if (index > -1) {
+                  validatedItems[index] = {
+                    ...validatedItems[index],
+                    menu: {
+                      ...validatedItems[index].menu,
+                      price: serverPrice,
+                      remainingQuota: serverQuota,
+                    }
+                  };
+                  hasChanges = true;
+                }
+              }
+            }
+          }
+        }
+
+        if (hasChanges) {
+          useCartStore.setState({
+            items: validatedItems,
+            tenantId: validatedItems.length > 0 ? cart.tenantId : null,
+            tenantName: validatedItems.length > 0 ? cart.tenantName : null,
+          });
+
+          customAlert.info('Keranjang Diperbarui', 'Beberapa menu di keranjang belanja Anda telah disesuaikan karena perubahan menu di database.');
+        }
+      } catch (err) {
+        console.error('Failed to validate cart items:', err);
+      }
+    };
+
+    validateCartItems();
+  }, []);
 
   if (cart.items.length === 0) {
     return (

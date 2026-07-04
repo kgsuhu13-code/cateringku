@@ -5,19 +5,22 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  Alert,
   ScrollView,
 } from 'react-native';
+import { customAlert } from '../../components/CustomAlert';
 import { useRouter } from 'expo-router';
 import { api } from '../../hooks/api';
+import { useAuthStore } from '../../hooks/useAuthStore';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, User, Phone, MapPin } from 'lucide-react-native';
+import MapPreview from '../../components/MapPreview';
 
-const GREEN = '#16a34a';
+const GREEN = '#059669';
 
 export default function EditProfile() {
   const router = useRouter();
+  const { updateUser } = useAuthStore();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -25,16 +28,50 @@ export default function EditProfile() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Address search suggestions (OpenStreetMap Nominatim)
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [triggerSearch, setTriggerSearch] = useState(true);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lon: number }>({
+    lat: -7.2504, // Default Surabaya
+    lon: 112.7688,
+  });
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const data = await api.getUserProfile();
         setName(data.name || '');
         setPhone(data.phone || '');
-        setAddress(data.address || '');
+        const addr = data.address || '';
+        setAddress(addr);
+
+        // Geocode initial address if it exists
+        if (addr.trim().length > 3) {
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&countrycodes=id&limit=1`,
+              {
+                headers: {
+                  'User-Agent': 'CateringkuApp/1.0',
+                },
+              }
+            );
+            const items = await response.json();
+            if (Array.isArray(items) && items.length > 0) {
+              setCoordinates({
+                lat: parseFloat(items[0].lat),
+                lon: parseFloat(items[0].lon),
+              });
+            }
+          } catch (e) {
+            console.error('Failed to geocode initial profile address:', e);
+          }
+        }
       } catch (err) {
         console.error(err);
-        Alert.alert('Error', 'Gagal memuat profil');
+        customAlert.error('Error', 'Gagal memuat profil');
       } finally {
         setLoading(false);
       }
@@ -42,22 +79,67 @@ export default function EditProfile() {
     loadProfile();
   }, []);
 
+  // Suggestions search effect
+  useEffect(() => {
+    if (!triggerSearch || address.length < 4) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=id&limit=5`,
+          {
+            headers: {
+              'User-Agent': 'CateringkuApp/1.0',
+            },
+          }
+        );
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setSuggestions(data);
+          setShowSuggestions(data.length > 0);
+        }
+      } catch (err) {
+        console.error('Error fetching address suggestions:', err);
+      } finally {
+        setSearching(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounce);
+  }, [address, triggerSearch]);
+
+  const selectSuggestion = (item: any) => {
+    setTriggerSearch(false);
+    setAddress(item.display_name);
+    setCoordinates({ lat: parseFloat(item.lat), lon: parseFloat(item.lon) });
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Perhatian', 'Nama tidak boleh kosong.');
+      customAlert.warning('Perhatian', 'Nama tidak boleh kosong.');
       return;
     }
     setSubmitting(true);
     try {
-      await api.updateUserProfile({
+      const updatedData = {
         name: name.trim(),
         phone: phone.trim(),
         address: address.trim(),
-      });
-      Alert.alert('Sukses', 'Profil berhasil diperbarui!');
+      };
+      await api.updateUserProfile(updatedData);
+      updateUser(updatedData);
+      
+      customAlert.success('Sukses', 'Profil berhasil diperbarui!');
       router.back();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Gagal memperbarui profil.');
+      customAlert.error('Error', err.message || 'Gagal memperbarui profil.');
     } finally {
       setSubmitting(false);
     }
@@ -124,8 +206,46 @@ export default function EditProfile() {
               placeholder="Contoh: Jl. Sukolilo Indah No. 22, Ruko B3, Surabaya"
               placeholderTextColor="#94a3b8"
               value={address}
-              onChangeText={setAddress}
+              onChangeText={(txt) => {
+                setTriggerSearch(true);
+                setAddress(txt);
+              }}
               className="border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-xs text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-800 text-left align-top"
+            />
+            {searching && (
+              <View className="flex-row items-center mt-2 px-2">
+                <ActivityIndicator size="small" color={GREEN} />
+                <Text className="text-slate-400 text-[10px] ml-2">Mencari alamat...</Text>
+              </View>
+            )}
+            {showSuggestions && suggestions.length > 0 && (
+              <View className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl mt-2 overflow-hidden">
+                {suggestions.map((item, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => selectSuggestion(item)}
+                    className={`px-4 py-3 flex-row items-start ${
+                      index < suggestions.length - 1 ? 'border-b border-slate-100 dark:border-slate-700' : ''
+                    }`}
+                  >
+                    <MapPin size={14} color="#64748b" className="mt-0.5 mr-2" />
+                    <Text className="text-[11px] text-slate-700 dark:text-slate-300 flex-1 leading-4">
+                      {item.display_name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Map Preview */}
+            <MapPreview
+              lat={coordinates.lat}
+              lon={coordinates.lon}
+              onLocationSelect={(loc) => {
+                setTriggerSearch(false);
+                setAddress(loc.address);
+                setCoordinates({ lat: loc.lat, lon: loc.lon });
+              }}
             />
           </View>
 
