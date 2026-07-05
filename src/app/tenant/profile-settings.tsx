@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../hooks/useAuthStore';
@@ -71,9 +72,13 @@ export default function TenantProfileSettings() {
 
         // Resolve coordinates of existing tenant address if present
         if (data.tenant?.address) {
+          const initHeaders: Record<string, string> = {};
+          if (Platform.OS !== 'web') {
+            initHeaders['User-Agent'] = 'CateringKu-App-Demo';
+          }
           fetch(
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(data.tenant.address)}&limit=1`,
-            { headers: { 'User-Agent': 'CateringKu-App-Demo' } }
+            { headers: initHeaders }
           )
             .then((res) => res.json())
             .then((geocodeData) => {
@@ -103,13 +108,13 @@ export default function TenantProfileSettings() {
     setSearching(true);
     setSearchResults([]);
     try {
+      const headers: Record<string, string> = {};
+      if (Platform.OS !== 'web') {
+        headers['User-Agent'] = 'CateringKu-App-Demo';
+      }
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
-        {
-          headers: {
-            'User-Agent': 'CateringKu-App-Demo',
-          },
-        }
+        { headers }
       );
       const data = await response.json();
       setSearchResults(data);

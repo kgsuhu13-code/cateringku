@@ -74,13 +74,13 @@ export default function RegisterScreen() {
     setSearching(true);
     setSearchResults([]);
     try {
+      const headers: Record<string, string> = {};
+      if (Platform.OS !== 'web') {
+        headers['User-Agent'] = 'CateringKu-App-Demo';
+      }
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
-        {
-          headers: {
-            'User-Agent': 'CateringKu-App-Demo',
-          },
-        }
+        { headers }
       );
       const data = await response.json();
       setSearchResults(data);
