@@ -1,17 +1,28 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { View, Platform } from 'react-native';
 
 interface OSMMapProps {
   latitude: number;
   longitude: number;
   onLocationSelect: (lat: number, lon: number) => void;
+  draggable?: boolean;
 }
 
-export default function OSMMap({ latitude, longitude, onLocationSelect }: OSMMapProps) {
-  const webViewRef = useRef<WebView>(null);
+// Lazy-load WebView only for mobile builds to prevent bundling crashes on web platforms
+let WebViewComponent: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    WebViewComponent = require('react-native-webview').WebView;
+  } catch (err) {
+    console.error('Failed to load react-native-webview:', err);
+  }
+}
 
-  // HTML content rendering Leaflet Map with OpenStreetMap tiles
+export default function OSMMap({ latitude, longitude, onLocationSelect, draggable = true }: OSMMapProps) {
+  const webViewRef = useRef<any>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Helper JS function in Leaflet script that determines if it should post message to mobile container or web parent window
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -32,29 +43,36 @@ export default function OSMMap({ latitude, longitude, onLocationSelect }: OSMMap
             attribution: '© OpenStreetMap'
           }).addTo(map);
 
-          var marker = L.marker([${latitude}, ${longitude}], { draggable: true }).addTo(map);
+          var marker = L.marker([${latitude}, ${longitude}], { draggable: ${draggable} }).addTo(map);
 
-          // Handle marker dragend event
-          marker.on('dragend', function(e) {
-            var position = marker.getLatLng();
-            window.ReactNativeWebView.postMessage(JSON.stringify({
+          function sendPosition(lat, lon) {
+            var msg = JSON.stringify({
               type: 'location_changed',
-              lat: position.lat,
-              lon: position.lng
-            }));
-          });
+              lat: lat,
+              lon: lon
+            });
+            if (window.ReactNativeWebView) {
+              window.ReactNativeWebView.postMessage(msg);
+            } else {
+              window.parent.postMessage(msg, '*');
+            }
+          }
 
-          // Handle map click event
-          map.on('click', function(e) {
-            marker.setLatLng(e.latlng);
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'location_changed',
-              lat: e.latlng.lat,
-              lon: e.latlng.lng
-            }));
-          });
+          if (${draggable}) {
+            // Handle marker dragend event
+            marker.on('dragend', function(e) {
+              var position = marker.getLatLng();
+              sendPosition(position.lat, position.lng);
+            });
 
-          // Listen for messages from React Native (e.g. search address trigger location update)
+            // Handle map click event
+            map.on('click', function(e) {
+              marker.setLatLng(e.latlng);
+              sendPosition(e.latlng.lat, e.latlng.lng);
+            });
+          }
+
+          // Listen for messages from parent (React Native Web or Mobile WebView)
           window.addEventListener('message', function(event) {
             try {
               var data = JSON.parse(event.data);
@@ -63,7 +81,7 @@ export default function OSMMap({ latitude, longitude, onLocationSelect }: OSMMap
                 marker.setLatLng([data.lat, data.lon]);
               }
             } catch (err) {
-              console.error(err);
+              // Ignore invalid parse messages
             }
           });
         </script>
@@ -71,36 +89,80 @@ export default function OSMMap({ latitude, longitude, onLocationSelect }: OSMMap
     </html>
   `;
 
-  // Send update to Leaflet map when lat/lon props change dynamically
+  // Sync coords from parent props to map view dynamically (Mobile & Web compatibility)
   useEffect(() => {
-    if (webViewRef.current) {
-      const updateMsg = JSON.stringify({
-        type: 'update_center',
-        lat: latitude,
-        lon: longitude
-      });
-      webViewRef.current.postMessage(updateMsg);
+    const updateMsg = JSON.stringify({
+      type: 'update_center',
+      lat: latitude,
+      lon: longitude
+    });
+
+    if (Platform.OS === 'web') {
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(updateMsg, '*');
+      }
+    } else {
+      if (webViewRef.current) {
+        webViewRef.current.postMessage(updateMsg);
+      }
     }
   }, [latitude, longitude]);
 
-  const handleMessage = (event: any) => {
+  // Handle messages on Web Browser (Web parent window)
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    const handleWebMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'location_changed') {
+          onLocationSelect(data.lat, data.lon);
+        }
+      } catch (err) {
+        // Ignore unparsed non-leaflet messages
+      }
+    };
+
+    window.addEventListener('message', handleWebMessage);
+    return () => window.removeEventListener('message', handleWebMessage);
+  }, [onLocationSelect]);
+
+  // Handle messages on Mobile (react-native-webview event)
+  const handleMobileMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === 'location_changed') {
         onLocationSelect(data.lat, data.lon);
       }
     } catch (err) {
-      console.error('Failed to parse message from map WebView:', err);
+      console.error('Failed to parse mobile message:', err);
     }
   };
 
+  if (Platform.OS === 'web') {
+    return (
+      <View className="h-[250px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+        <iframe
+          ref={iframeRef}
+          srcDoc={htmlContent}
+          style={{ width: '100%', height: '100%', border: 'none' }}
+          sandbox="allow-scripts allow-same-origin"
+        />
+      </View>
+    );
+  }
+
+  if (!WebViewComponent) {
+    return null;
+  }
+
   return (
     <View className="h-[250px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
-      <WebView
+      <WebViewComponent
         ref={webViewRef}
         originWhitelist={['*']}
         source={{ html: htmlContent }}
-        onMessage={handleMessage}
+        onMessage={handleMobileMessage}
         scrollEnabled={false}
         className="flex-1"
       />

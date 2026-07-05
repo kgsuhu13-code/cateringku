@@ -347,9 +347,16 @@ export default function TenantProfileSettings() {
                   <MapPin size={16} color="#64748b" className="mt-0.5" />
                   <View className="ml-3 flex-1">
                     <Text className="text-slate-400 dark:text-slate-300 text-[9px] font-bold uppercase">Alamat Dapur</Text>
-                    <Text className="text-slate-700 dark:text-slate-350 text-xs font-semibold leading-4">
+                    <Text className="text-slate-700 dark:text-slate-350 text-xs font-semibold leading-4 mb-2">
                       {profile?.tenant?.address || 'Kantin Universitas'}
                     </Text>
+                    {/* OSM Map Read-Only for View Mode */}
+                    <OSMMap
+                      latitude={tenantCoords.latitude}
+                      longitude={tenantCoords.longitude}
+                      onLocationSelect={() => {}}
+                      draggable={false}
+                    />
                   </View>
                 </View>
 
