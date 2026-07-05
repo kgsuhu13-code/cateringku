@@ -26,20 +26,15 @@ const GREEN = '#059669';
 
 export default function MenuDetail() {
   const router = useRouter();
-  const { id, name, price, tenantId, tenantName } = useLocalSearchParams();
+  const { id, name, price, tenantId, tenantName, description, maxQuota, availableAt, remainingQuota } = useLocalSearchParams();
   const cart = useCartStore();
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
-  const [menuDetail, setMenuDetail] = useState<any>(null);
-  const [loadingMenu, setLoadingMenu] = useState(true);
 
   useEffect(() => {
     const fetchMenuDetails = async () => {
       try {
-        // Fetch specific menu to get full description and maxQuota
-        // Since we don't have direct GET /menus/:id, we can fetch all menus for this tenant
-        // but for simplicity, we mock/set state from params, or fetch reviews
         const revs = await api.getMenuReviews(id as string);
         setReviews(revs);
       } catch (err) {
@@ -61,16 +56,17 @@ export default function MenuDetail() {
       id: id as string,
       name: name as string,
       price: parsedPrice,
-      maxQuota: 10,
-      availableAt: new Date().toISOString().split('T')[0],
+      maxQuota: parseInt((maxQuota as string) || '10'),
+      availableAt: (availableAt as string) || new Date().toISOString().split('T')[0],
       tenantId: (tenantId as string) || '',
+      remainingQuota: remainingQuota ? parseInt(remainingQuota as string) : undefined
     };
     
-    // Add to cart with today's date
-    const today = new Date().toISOString().split('T')[0];
-    const { success } = cart.addToCart(mockMenu, 1, today, (tenantName as string) || 'Catering');
+    // Add to cart with target date
+    const targetDate = (availableAt as string) || new Date().toISOString().split('T')[0];
+    const { success } = cart.addToCart(mockMenu, 1, targetDate, (tenantName as string) || 'Catering');
     if (success) {
-      customAlert.success('Sukses', `${name} dimasukkan ke keranjang untuk pengiriman hari ini.`);
+      customAlert.success('Sukses', `${name} dimasukkan ke keranjang untuk pengiriman.`);
       router.push('/customer/cart' as any);
     } else {
       customAlert.error('Gagal', 'Quota sudah habis.');
@@ -101,7 +97,7 @@ export default function MenuDetail() {
           <View className="w-24 h-24 bg-green-50 dark:bg-green-950/20 rounded-full items-center justify-center mb-4">
             <ShoppingCart size={40} color={GREEN} />
           </View>
-          <Text className="text-slate-800 dark:text-white font-extrabold text-xl text-center">{name}</Text>
+          <Text className="text-slate-850 dark:text-white font-extrabold text-xl text-center">{name}</Text>
           <Text className="text-green-600 dark:text-green-400 font-black text-lg mt-2">
             Rp {parseFloat(price as string || '0').toLocaleString('id-ID')}
           </Text>
@@ -115,10 +111,16 @@ export default function MenuDetail() {
 
         {/* Description */}
         <View className="bg-white dark:bg-slate-900 mx-4 rounded-3xl mt-4 p-5 shadow-sm border border-slate-100 dark:border-slate-800">
-          <Text className="text-slate-800 dark:text-white font-black text-sm mb-2">Deskripsi Makanan</Text>
+          <Text className="text-slate-850 dark:text-white font-black text-sm mb-2">Deskripsi Makanan</Text>
           <Text className="text-slate-500 dark:text-slate-400 text-xs leading-4">
-            Dibuat secara higienis menggunakan bahan-bahan organik segar bermutu tinggi. Kaya akan nutrisi, disajikan hangat, dan tanpa pengawet tambahan. Sangat cocok sebagai menu diet sehat ataupun kebutuhan gizi harian Anda.
+            {description || 'Dibuat secara higienis menggunakan bahan-bahan organik segar bermutu tinggi. Kaya akan nutrisi, disajikan hangat, dan tanpa pengawet tambahan.'}
           </Text>
+          <View className="border-t border-slate-50 dark:border-slate-800 mt-4 pt-3 flex-row justify-between items-center">
+            <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Kuota Pengiriman</Text>
+            <Text className="text-slate-600 dark:text-slate-350 text-xs font-extrabold">
+              Sisa {remainingQuota || maxQuota || '10'} dari {maxQuota || '10'} porsi
+            </Text>
+          </View>
         </View>
 
         {/* Reviews Section */}

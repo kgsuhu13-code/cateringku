@@ -177,7 +177,11 @@ export default function TenantDetail() {
                       name: item.name, 
                       price: item.price.toString(),
                       tenantId: id as string,
-                      tenantName: name as string
+                      tenantName: name as string,
+                      description: item.description || '',
+                      maxQuota: item.maxQuota.toString(),
+                      availableAt: item.availableAt,
+                      remainingQuota: (item.remainingQuota !== undefined ? item.remainingQuota : item.maxQuota).toString()
                     } 
                   })}
                   activeOpacity={0.8}
