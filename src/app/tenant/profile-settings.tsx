@@ -14,6 +14,7 @@ import { api } from '../../hooks/api';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Store, User, Phone, MapPin, Mail, LogOut, ChevronRight } from 'lucide-react-native';
+import OSMMap from '../../components/OSMMap';
 
 const GREEN = '#059669';
 
@@ -35,6 +36,27 @@ export default function TenantProfileSettings() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [tenantCoords, setTenantCoords] = useState({ latitude: -6.3627, longitude: 106.8272 });
+
+  const handleMapLocationSelect = async (lat: number, lon: number) => {
+    setTenantCoords({ latitude: lat, longitude: lon });
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+        {
+          headers: {
+            'User-Agent': 'CateringKu-App-Demo',
+          },
+        }
+      );
+      const data = await response.json();
+      if (data && data.display_name) {
+        setTenantAddress(data.display_name);
+      }
+    } catch (err) {
+      console.error('Failed to reverse geocode coordinate:', err);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -46,6 +68,24 @@ export default function TenantProfileSettings() {
         setTenantAddress(data.tenant?.address || '');
         setOwnerName(data.name || '');
         setOwnerPhone(data.phone || '');
+
+        // Resolve coordinates of existing tenant address if present
+        if (data.tenant?.address) {
+          fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(data.tenant.address)}&limit=1`,
+            { headers: { 'User-Agent': 'CateringKu-App-Demo' } }
+          )
+            .then((res) => res.json())
+            .then((geocodeData) => {
+              if (geocodeData && geocodeData.length > 0) {
+                setTenantCoords({
+                  latitude: parseFloat(geocodeData[0].lat),
+                  longitude: parseFloat(geocodeData[0].lon),
+                });
+              }
+            })
+            .catch((err) => console.log('Failed to geocode initial tenant address:', err));
+        }
       }
     } catch (err) {
       console.error(err);
@@ -210,6 +250,10 @@ export default function TenantProfileSettings() {
                         key={idx}
                         onPress={() => {
                           setTenantAddress(item.display_name);
+                          setTenantCoords({
+                            latitude: parseFloat(item.lat),
+                            longitude: parseFloat(item.lon)
+                          });
                           setSearchResults([]);
                         }}
                         className={`p-3 ${
@@ -223,6 +267,15 @@ export default function TenantProfileSettings() {
                     ))}
                   </View>
                 )}
+
+                {/* OSM Map View */}
+                <View className="mt-2">
+                  <OSMMap
+                    latitude={tenantCoords.latitude}
+                    longitude={tenantCoords.longitude}
+                    onLocationSelect={handleMapLocationSelect}
+                  />
+                </View>
               </View>
 
               {/* Nama Pemilik */}

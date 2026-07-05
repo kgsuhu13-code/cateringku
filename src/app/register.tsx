@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   UtensilsCrossed,
 } from 'lucide-react-native';
+import OSMMap from '../components/OSMMap';
 
 interface Tenant {
   id: string;
@@ -46,6 +47,27 @@ export default function RegisterScreen() {
   const [tenantAddress, setTenantAddress] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [tenantCoords, setTenantCoords] = useState({ latitude: -6.3627, longitude: 106.8272 });
+
+  const handleMapLocationSelect = async (lat: number, lon: number) => {
+    setTenantCoords({ latitude: lat, longitude: lon });
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+        {
+          headers: {
+            'User-Agent': 'CateringKu-App-Demo',
+          },
+        }
+      );
+      const data = await response.json();
+      if (data && data.display_name) {
+        setTenantAddress(data.display_name);
+      }
+    } catch (err) {
+      console.error('Failed to reverse geocode coordinate:', err);
+    }
+  };
 
   const handleSearchAddress = async (query: string) => {
     if (!query) return;
@@ -335,6 +357,10 @@ export default function RegisterScreen() {
                               key={idx}
                               onPress={() => {
                                 setTenantAddress(item.display_name);
+                                setTenantCoords({
+                                  latitude: parseFloat(item.lat),
+                                  longitude: parseFloat(item.lon)
+                                });
                                 setSearchResults([]);
                               }}
                               className={`p-3.5 ${
@@ -348,6 +374,15 @@ export default function RegisterScreen() {
                           ))}
                         </View>
                       )}
+
+                      {/* OSM Map View */}
+                      <View className="mt-2">
+                        <OSMMap
+                          latitude={tenantCoords.latitude}
+                          longitude={tenantCoords.longitude}
+                          onLocationSelect={handleMapLocationSelect}
+                        />
+                      </View>
                     </View>
                   </View>
                 ) : (
