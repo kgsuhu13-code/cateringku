@@ -41,13 +41,13 @@ export default function CheckoutShipping() {
 
   useEffect(() => {
     if (user?.address && user.address.trim().length > 3) {
+      const headers: Record<string, string> = {};
+      if (Platform.OS !== 'web') {
+        headers['User-Agent'] = 'CateringKu-App';
+      }
       fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(user.address)}&countrycodes=id&limit=1`,
-        {
-          headers: {
-            'User-Agent': 'CateringKu-App',
-          },
-        }
+        { headers }
       )
         .then((res) => res.json())
         .then((data) => {
@@ -72,13 +72,13 @@ export default function CheckoutShipping() {
     const delayDebounce = setTimeout(async () => {
       setSearching(true);
       try {
+        const headers: Record<string, string> = {};
+        if (Platform.OS !== 'web') {
+          headers['User-Agent'] = 'CateringKu-App';
+        }
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=id&limit=5`,
-          {
-            headers: {
-              'User-Agent': 'CateringKu-App',
-            },
-          }
+          { headers }
         );
         const data = await response.json();
         if (Array.isArray(data)) {

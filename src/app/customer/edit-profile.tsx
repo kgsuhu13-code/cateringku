@@ -50,13 +50,13 @@ export default function EditProfile() {
         // Geocode initial address if it exists
         if (addr.trim().length > 3) {
           try {
+            const headers: Record<string, string> = {};
+            if (Platform.OS !== 'web') {
+              headers['User-Agent'] = 'CateringkuApp/1.0';
+            }
             const response = await fetch(
               `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&countrycodes=id&limit=1`,
-              {
-                headers: {
-                  'User-Agent': 'CateringkuApp/1.0',
-                },
-              }
+              { headers }
             );
             const items = await response.json();
             if (Array.isArray(items) && items.length > 0) {
@@ -90,13 +90,13 @@ export default function EditProfile() {
     const delayDebounce = setTimeout(async () => {
       setSearching(true);
       try {
+        const headers: Record<string, string> = {};
+        if (Platform.OS !== 'web') {
+          headers['User-Agent'] = 'CateringkuApp/1.0';
+        }
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=id&limit=5`,
-          {
-            headers: {
-              'User-Agent': 'CateringkuApp/1.0',
-            },
-          }
+          { headers }
         );
         const data = await response.json();
         if (Array.isArray(data)) {
