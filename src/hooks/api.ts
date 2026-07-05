@@ -165,6 +165,18 @@ export const api = {
     return request('/tenant/stats');
   },
 
+  // Tenant: Update profile details
+  updateTenantProfile: async (tenantData: {
+    name?: string;
+    description?: string;
+    address?: string;
+  }) => {
+    return request('/tenant/profile', {
+      method: 'PUT',
+      body: JSON.stringify(tenantData),
+    });
+  },
+
   // Tenant: Get orders placed with this tenant
   getTenantOrders: async () => {
     return request('/tenant/orders');

@@ -44,6 +44,30 @@ export default function RegisterScreen() {
   const [tenantName, setTenantName] = useState('');
   const [tenantDesc, setTenantDesc] = useState('');
   const [tenantAddress, setTenantAddress] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const handleSearchAddress = async (query: string) => {
+    if (!query) return;
+    setSearching(true);
+    setSearchResults([]);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+        {
+          headers: {
+            'User-Agent': 'CateringKu-App-Demo',
+          },
+        }
+      );
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (err) {
+      console.error('Failed to search address:', err);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   useEffect(() => {
     if (role === 'TENANT') fetchTenants();
@@ -280,15 +304,50 @@ export default function RegisterScreen() {
                       />
                     </View>
                     {/* Alamat */}
-                    <View>
-                      <TextInput
-                        className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-4 h-[52px] rounded-2xl border border-slate-200 dark:border-slate-700 text-sm font-medium"
-                        placeholder="Alamat Usaha Catering *"
-                        placeholderTextColor="#94a3b8"
-                        value={tenantAddress}
-                        onChangeText={setTenantAddress}
-                        accessibilityLabel="Alamat Catering"
-                      />
+                    <View className="gap-2">
+                      <View className="flex-row gap-2">
+                        <TextInput
+                          className="flex-1 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-4 h-[52px] rounded-2xl border border-slate-200 dark:border-slate-700 text-sm font-medium"
+                          placeholder="Alamat Usaha Catering *"
+                          placeholderTextColor="#94a3b8"
+                          value={tenantAddress}
+                          onChangeText={setTenantAddress}
+                          accessibilityLabel="Alamat Catering"
+                        />
+                        <TouchableOpacity
+                          onPress={() => handleSearchAddress(tenantAddress)}
+                          disabled={searching}
+                          className="bg-green-600 px-4 rounded-2xl justify-center items-center h-[52px]"
+                        >
+                          {searching ? (
+                            <ActivityIndicator color="white" size="small" />
+                          ) : (
+                            <Text className="text-white text-xs font-bold">Cari</Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Dropdown OSM Search Results */}
+                      {searchResults.length > 0 && (
+                        <View className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mt-1 max-h-[200px] z-50">
+                          {searchResults.map((item: any, idx: number) => (
+                            <TouchableOpacity
+                              key={idx}
+                              onPress={() => {
+                                setTenantAddress(item.display_name);
+                                setSearchResults([]);
+                              }}
+                              className={`p-3.5 ${
+                                idx < searchResults.length - 1 ? 'border-b border-slate-100 dark:border-slate-700' : ''
+                              }`}
+                            >
+                              <Text className="text-slate-700 dark:text-slate-300 text-[11px] leading-4">
+                                {item.display_name}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
                     </View>
                   </View>
                 ) : (

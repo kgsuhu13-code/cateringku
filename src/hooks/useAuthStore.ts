@@ -4,7 +4,9 @@ import { api, setAuthToken } from '@/hooks/api';
 
 // Restore token on module load if session exists
 // (runs once when the module is first imported)
-if (typeof window !== 'undefined') {
+const memoryStorage: Record<string, string> = {};
+
+if (typeof window !== 'undefined' && window.sessionStorage) {
   try {
     const stored = window.sessionStorage.getItem('auth-storage');
     if (stored) {
@@ -105,11 +107,16 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      // Use sessionStorage so data survives page navigations in same tab
-      // but clears when browser is closed
-      storage: createJSONStorage(() =>
-        typeof window !== 'undefined' ? window.sessionStorage : ({} as any)
-      ),
+      storage: createJSONStorage(() => {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          return window.sessionStorage;
+        }
+        return {
+          getItem: (name) => memoryStorage[name] || null,
+          setItem: (name, value) => { memoryStorage[name] = value; },
+          removeItem: (name) => { delete memoryStorage[name]; }
+        };
+      }),
       // Only persist these keys (exclude isLoading/error)
       partialize: (state) => ({
         user: state.user,

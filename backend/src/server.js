@@ -679,6 +679,26 @@ app.get('/api/tenant/stats', verifyToken, requireTenant, async (req, res) => {
   }
 });
 
+// PUT /api/tenant/profile : Update tenant profile details
+app.put('/api/tenant/profile', verifyToken, requireTenant, async (req, res) => {
+  const { name, description, address } = req.body;
+
+  try {
+    const updatedTenant = await prisma.tenant.update({
+      where: { id: req.user.tenantId },
+      data: {
+        name: name !== undefined ? name : undefined,
+        description: description !== undefined ? description : undefined,
+        address: address !== undefined ? address : undefined,
+      },
+    });
+    res.json(updatedTenant);
+  } catch (error) {
+    console.error('Error updating tenant profile:', error);
+    res.status(500).json({ error: 'Failed to update tenant profile' });
+  }
+});
+
 // ==========================================
 // 5. Tenant Menu Edit & Delete Endpoints
 // ==========================================

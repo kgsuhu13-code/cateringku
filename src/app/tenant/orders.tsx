@@ -74,17 +74,17 @@ export default function TenantOrders() {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'PAID':
-        return { label: 'Dibayar', color: 'text-green-700 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50' };
+        return { label: 'Dibayar', color: 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50' };
       case 'PREPARING':
-        return { label: 'Sedang Dibuat', color: 'text-orange-700 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900/50' };
+        return { label: 'Sedang Dibuat', color: 'text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900/50' };
       case 'SHIPPED':
-        return { label: 'Sedang Dikirim', color: 'text-blue-700 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50' };
+        return { label: 'Sedang Dikirim', color: 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50' };
       case 'COMPLETED':
-        return { label: 'Selesai', color: 'text-slate-650 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50' };
+        return { label: 'Selesai', color: 'text-slate-650 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50' };
       case 'CANCELLED':
-        return { label: 'Dibatalkan', color: 'text-red-650 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50' };
+        return { label: 'Dibatalkan', color: 'text-red-650 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50' };
       default:
-        return { label: 'Menunggu', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50' };
+        return { label: 'Menunggu', color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50' };
     }
   };
 
@@ -97,7 +97,7 @@ export default function TenantOrders() {
         <View className="flex-row justify-between items-center mb-5">
           <View>
             <Text className="text-slate-850 dark:text-white font-extrabold text-xl">Daftar Pesanan</Text>
-            <Text className="text-slate-400 text-xs mt-0.5">Ubah status pesanan pelanggan di sini</Text>
+            <Text className="text-slate-400 dark:text-slate-300 text-xs mt-0.5">Ubah status pesanan pelanggan di sini</Text>
           </View>
           <TouchableOpacity
             onPress={loadOrders}
@@ -133,7 +133,7 @@ export default function TenantOrders() {
                     <Text className="text-slate-850 dark:text-slate-100 font-bold text-sm" numberOfLines={1}>
                       {order.customer.name}
                     </Text>
-                    <Text className="text-slate-400 text-[9px] mt-1 font-bold">
+                    <Text className="text-slate-400 dark:text-slate-400 text-[9px] mt-1 font-bold">
                       Order ID: {order.id.substring(0, 8).toUpperCase()}... • {new Date(order.orderDate).toLocaleDateString('id-ID', {
                         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                       })}
@@ -147,10 +147,10 @@ export default function TenantOrders() {
                 {/* Items */}
                 {order.orderItems.map((item) => (
                   <View key={item.id} className="flex-row justify-between items-center mb-1.5">
-                    <Text className="text-slate-650 dark:text-slate-400 text-xs flex-1 pr-2" numberOfLines={1}>
+                    <Text className="text-slate-650 dark:text-slate-200 text-xs flex-1 pr-2" numberOfLines={1}>
                       {item.quantity}x {item.menu.name}
                     </Text>
-                    <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-semibold">
+                    <Text className="text-slate-400 dark:text-slate-300 text-[10px] font-semibold">
                       Kirim: {item.targetDate}
                     </Text>
                   </View>
@@ -158,7 +158,7 @@ export default function TenantOrders() {
 
                 {/* Total Amount */}
                 <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-slate-50 dark:border-slate-850">
-                  <Text className="text-slate-400 dark:text-slate-500 text-xs font-semibold">Total Pendapatan</Text>
+                  <Text className="text-slate-400 dark:text-slate-300 text-xs font-semibold">Total Pendapatan</Text>
                   <Text className="text-slate-800 dark:text-white font-extrabold text-sm">
                     Rp {order.totalAmount.toLocaleString('id-ID')}
                   </Text>

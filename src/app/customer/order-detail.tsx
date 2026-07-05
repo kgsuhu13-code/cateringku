@@ -91,14 +91,14 @@ export default function CustomerOrderDetail() {
       <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
         {/* Status Card */}
         <View className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 mb-4 shadow-sm">
-          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Status Pemesanan</Text>
+          <Text className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider">Status Pemesanan</Text>
           <Text className="text-slate-800 dark:text-white font-extrabold text-base mt-1">
             {order.status === 'COMPLETED' ? 'Pesanan Selesai' :
              order.status === 'SHIPPED' ? 'Makanan Sedang Dikirim' :
              order.status === 'PREPARING' ? 'Makanan Sedang Disiapkan' :
              order.status === 'PAID' ? 'Sudah Dibayar' : 'Menunggu Konfirmasi'}
           </Text>
-          <Text className="text-slate-450 dark:text-slate-500 text-[9px] mt-1">
+          <Text className="text-slate-400 dark:text-slate-300 text-[9px] mt-1">
             Pembayaran: <Text className="font-bold">{order.paymentStatus}</Text>
           </Text>
         </View>
@@ -110,8 +110,8 @@ export default function CustomerOrderDetail() {
           <View className="flex-row items-start mb-4">
             <MapPin size={16} color="#64748b" className="mt-0.5" />
             <View className="flex-1 ml-3">
-              <Text className="text-slate-700 dark:text-slate-350 text-xs font-bold">Lokasi Pengantaran</Text>
-              <Text className="text-slate-500 dark:text-slate-450 text-[10px] leading-4 mt-0.5">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-bold">Lokasi Pengantaran</Text>
+              <Text className="text-slate-500 dark:text-slate-300 text-[10px] leading-4 mt-0.5">
                 {order.shippingAddress || 'Alamat tidak diatur'}
               </Text>
             </View>
@@ -120,8 +120,8 @@ export default function CustomerOrderDetail() {
           <View className="flex-row items-start">
             <Clock size={16} color="#64748b" className="mt-0.5" />
             <View className="flex-1 ml-3">
-              <Text className="text-slate-700 dark:text-slate-350 text-xs font-bold">Estimasi Jam Antar</Text>
-              <Text className="text-slate-500 dark:text-slate-450 text-[10px] mt-0.5">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-bold">Estimasi Jam Antar</Text>
+              <Text className="text-slate-500 dark:text-slate-350 text-[10px] mt-0.5">
                 {order.deliveryTime ? `${order.deliveryTime} WIB` : '12:00 WIB'}
               </Text>
             </View>
@@ -131,8 +131,8 @@ export default function CustomerOrderDetail() {
         {/* Tenant Info */}
         <View className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 mb-4 shadow-sm">
           <Text className="text-slate-800 dark:text-white font-extrabold text-sm mb-2">Penyedia Catering</Text>
-          <Text className="text-slate-700 dark:text-white font-bold text-xs">{order.tenant.name}</Text>
-          <Text className="text-slate-400 text-[9px] mt-1">📍 {order.tenant.address || 'Kantin Universitas'}</Text>
+          <Text className="text-slate-700 dark:text-slate-200 font-bold text-xs">{order.tenant.name}</Text>
+          <Text className="text-slate-400 dark:text-slate-300 text-[9px] mt-1">📍 {order.tenant.address || 'Kantin Universitas'}</Text>
         </View>
 
         {/* Items & Review Actions */}
@@ -144,7 +144,7 @@ export default function CustomerOrderDetail() {
               <View className="flex-row justify-between items-center">
                 <View className="flex-1 pr-2">
                   <Text className="text-slate-800 dark:text-white font-bold text-xs">{item.menu.name}</Text>
-                  <Text className="text-slate-400 text-[10px] mt-1">
+                  <Text className="text-slate-400 dark:text-slate-300 text-[10px] mt-1">
                     Rp {item.menu.price.toLocaleString('id-ID')} x {item.quantity} • Pengiriman: {item.targetDate}
                   </Text>
                 </View>

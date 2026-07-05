@@ -103,14 +103,14 @@ export default function TenantOrderDetail() {
       >
         {/* Status Card */}
         <View className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 mb-4 shadow-sm">
-          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Status Pemesanan Masuk</Text>
+          <Text className="text-slate-400 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider">Status Pemesanan Masuk</Text>
           <Text className="text-slate-800 dark:text-white font-extrabold text-base mt-1">
             {order.status === 'COMPLETED' ? 'Selesai' :
              order.status === 'SHIPPED' ? 'Makanan Sedang Dikirim' :
              order.status === 'PREPARING' ? 'Sedang Dimasak' :
              order.status === 'PAID' ? 'Sudah Dibayar (Menunggu Dimasak)' : 'Menunggu Pembayaran'}
           </Text>
-          <Text className="text-slate-450 dark:text-slate-500 text-[9px] mt-1">
+          <Text className="text-slate-400 dark:text-slate-300 text-[9px] mt-1">
             Pembayaran: <Text className="font-bold">{order.paymentStatus}</Text>
           </Text>
         </View>
@@ -122,16 +122,16 @@ export default function TenantOrderDetail() {
           <View className="flex-row items-center mb-4">
             <User size={16} color="#64748b" />
             <View className="flex-1 ml-3">
-              <Text className="text-slate-400 text-[9px] font-bold uppercase">Nama Pembeli</Text>
-              <Text className="text-slate-700 dark:text-slate-350 text-xs font-semibold">{order.customer.name}</Text>
+              <Text className="text-slate-400 dark:text-slate-300 text-[9px] font-bold uppercase">Nama Pembeli</Text>
+              <Text className="text-slate-700 dark:text-slate-200 text-xs font-semibold">{order.customer.name}</Text>
             </View>
           </View>
 
           <View className="flex-row items-center">
             <Phone size={16} color="#64748b" />
             <View className="flex-1 ml-3">
-              <Text className="text-slate-400 text-[9px] font-bold uppercase">No. Telepon / WA</Text>
-              <Text className="text-slate-700 dark:text-slate-350 text-xs font-semibold">
+              <Text className="text-slate-400 dark:text-slate-300 text-[9px] font-bold uppercase">No. Telepon / WA</Text>
+              <Text className="text-slate-700 dark:text-slate-200 text-xs font-semibold">
                 {order.customer.phone || 'Belum ditambahkan'}
               </Text>
             </View>
@@ -145,8 +145,8 @@ export default function TenantOrderDetail() {
           <View className="flex-row items-start mb-4">
             <MapPin size={16} color="#64748b" className="mt-0.5" />
             <View className="flex-1 ml-3">
-              <Text className="text-slate-700 dark:text-slate-350 text-xs font-bold">Alamat Pengiriman</Text>
-              <Text className="text-slate-500 dark:text-slate-450 text-[10px] leading-4 mt-0.5">
+              <Text className="text-slate-700 dark:text-slate-305 text-xs font-bold">Alamat Pengiriman</Text>
+              <Text className="text-slate-500 dark:text-slate-300 text-[10px] leading-4 mt-0.5">
                 {order.shippingAddress || 'Alamat Kantin Kampus'}
               </Text>
             </View>
@@ -155,8 +155,8 @@ export default function TenantOrderDetail() {
           <View className="flex-row items-start">
             <Clock size={16} color="#64748b" className="mt-0.5" />
             <View className="flex-1 ml-3">
-              <Text className="text-slate-700 dark:text-slate-350 text-xs font-bold">Jam Pengiriman</Text>
-              <Text className="text-slate-500 dark:text-slate-450 text-[10px] mt-0.5">
+              <Text className="text-slate-700 dark:text-slate-305 text-xs font-bold">Jam Pengiriman</Text>
+              <Text className="text-slate-500 dark:text-slate-300 text-[10px] mt-0.5">
                 {order.deliveryTime ? `${order.deliveryTime} WIB` : '12:00 WIB'}
               </Text>
             </View>
@@ -170,7 +170,7 @@ export default function TenantOrderDetail() {
             <View key={item.id} className="flex-row justify-between items-center py-2.5 border-b border-slate-50 dark:border-slate-850">
               <View className="flex-1 pr-2">
                 <Text className="text-slate-800 dark:text-white font-bold text-xs">{item.menu.name}</Text>
-                <Text className="text-slate-450 text-[9px] mt-0.5">
+                <Text className="text-slate-400 dark:text-slate-300 text-[9px] mt-0.5">
                   Rp {item.menu.price.toLocaleString('id-ID')} x {item.quantity} • Pengiriman: {item.targetDate}
                 </Text>
               </View>

@@ -13,6 +13,7 @@ import { useAuthStore } from '../../hooks/useAuthStore';
 import { api } from '../../hooks/api';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Location from 'expo-location';
 import {
   Home as HomeIcon,
   CalendarDays,
@@ -34,9 +35,39 @@ interface Tenant {
   name: string;
   description?: string;
   address?: string;
+  distance?: number | null;
 }
 
 const GREEN = '#059669';
+
+// Fungsi hitung jarak Haversine (km)
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // Radius bumi
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Simulasi koordinat Tenant berbasis hash name agar konsisten tersebar di sekitar kampus (-6.3627, 106.8272)
+function getTenantCoords(tenantName: string) {
+  let hash = 0;
+  for (let i = 0; i < tenantName.length; i++) {
+    hash = tenantName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const latOffset = ((Math.abs(hash) % 100) / 10000) - 0.005; // radius sebar ~1km
+  const lonOffset = (((Math.abs(hash) >> 8) % 100) / 10000) - 0.005;
+  return {
+    latitude: -6.3627 + latOffset,
+    longitude: 106.8272 + lonOffset,
+  };
+}
 
 const PROMOS = [
   {
@@ -104,16 +135,106 @@ export default function CustomerHome() {
     return () => clearInterval(timer);
   }, [activeSlide]);
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser, isAuthenticated } = useAuthStore();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  // Load Tenants list
+  const loadTenants = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getTenants();
+      setTenants(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    api.getTenants()
-      .then(setTenants)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    if (isAuthenticated) {
+      loadTenants();
+    }
+  }, [isAuthenticated]);
+
+  // Request location permission and get current location automatically
+  useEffect(() => {
+    async function requestAndGetLocation() {
+      setLocationLoading(true);
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Permission to access location was denied');
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        const coords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+        setUserCoords(coords);
+
+        // Perform reverse geocoding to get human-friendly address
+        const geocode = await Location.reverseGeocodeAsync(coords);
+        if (geocode && geocode.length > 0) {
+          const addressObj = geocode[0];
+          const street = addressObj.street || addressObj.name || '';
+          const district = addressObj.district || addressObj.subregion || '';
+          const city = addressObj.city || addressObj.region || '';
+          const formattedAddress = [street, district, city].filter(Boolean).join(', ') || 'Lokasi Terdeteksi';
+
+          console.log('Alamat GPS Terdeteksi:', formattedAddress);
+
+          // Sync to backend database
+          await api.updateUserProfile({ address: formattedAddress }).catch((err) =>
+            console.log('Gagal update alamat di db:', err)
+          );
+
+          // Update Zustand store
+          updateUser({ address: formattedAddress });
+        }
+      } catch (error) {
+        console.error('Error getting location:', error);
+      } finally {
+        setLocationLoading(false);
+      }
+    }
+
+    if (isAuthenticated) {
+      requestAndGetLocation();
+    }
+  }, [isAuthenticated]);
+
+  // Calculate distance for each tenant and sort by closest distance
+  const tenantsWithDistance = tenants.map((t) => {
+    const tCoords = getTenantCoords(t.name);
+    let distance = null;
+    if (userCoords) {
+      distance = getDistance(
+        userCoords.latitude,
+        userCoords.longitude,
+        tCoords.latitude,
+        tCoords.longitude
+      );
+    }
+    return {
+      ...t,
+      distance,
+    };
+  });
+
+  const sortedTenants = [...tenantsWithDistance].sort((a, b) => {
+    if (a.distance === null) return 1;
+    if (b.distance === null) return -1;
+    return a.distance - b.distance;
+  });
 
   const quickActions = [
     { icon: UtensilsCrossed, label: 'Catering Harian', color: 'bg-green-500', onPress: () => router.push('/customer/calendar' as any) },
@@ -265,7 +386,7 @@ export default function CustomerHome() {
               <Skeleton.TenantItem />
               <Skeleton.TenantItem />
             </View>
-          ) : tenants.length === 0 ? (
+          ) : sortedTenants.length === 0 ? (
             <View className="items-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
               <UtensilsCrossed size={32} color="#cbd5e1" strokeWidth={1.5} />
               <Text className="text-slate-400 dark:text-slate-500 text-sm font-semibold mt-4">
@@ -273,7 +394,7 @@ export default function CustomerHome() {
               </Text>
             </View>
           ) : (
-            tenants.map((t) => (
+            sortedTenants.map((t) => (
               <TouchableOpacity
                 key={t.id}
                 onPress={() => router.push({ pathname: '/customer/tenant-detail' as any, params: { id: t.id, name: t.name } })}
@@ -291,7 +412,7 @@ export default function CustomerHome() {
                     {t.description || 'Penyedia katering pre-order sehat dan higienis.'}
                   </Text>
                   <Text className="text-slate-400 dark:text-slate-500 text-[9px] mt-1.5 font-bold" numberOfLines={1}>
-                    📍 {t.address || 'Tanpa alamat'}
+                    📍 {t.address || 'Tanpa alamat'}{t.distance !== undefined && t.distance !== null ? ` • ${t.distance.toFixed(1)} km dari Anda` : ''}
                   </Text>
                 </View>
                 <ChevronRight size={16} color="#94a3b8" strokeWidth={2.5} />

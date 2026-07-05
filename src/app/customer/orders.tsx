@@ -67,19 +67,19 @@ export default function CustomerOrders() {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'PAID':
-        return { label: 'Dibayar', color: 'text-green-700 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50', Icon: CheckCheck, iconColor: '#15803d' };
+        return { label: 'Dibayar', color: 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50', Icon: CheckCheck, iconColor: '#10b981' };
       case 'PREPARING':
-        return { label: 'Sedang Dibuat', color: 'text-orange-700 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900/50', Icon: ChefHat, iconColor: '#ea580c' };
+        return { label: 'Sedang Dibuat', color: 'text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900/50', Icon: ChefHat, iconColor: '#f97316' };
       case 'SHIPPED':
-        return { label: 'Sedang Dikirim', color: 'text-blue-700 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50', Icon: Clock, iconColor: '#2563eb' };
+        return { label: 'Sedang Dikirim', color: 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50', Icon: Clock, iconColor: '#3b82f6' };
       case 'COMPLETED':
-        return { label: 'Selesai', color: 'text-green-700 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50', Icon: CheckCheck, iconColor: '#15803d' };
+        return { label: 'Selesai', color: 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900/50', Icon: CheckCheck, iconColor: '#10b981' };
       case 'CANCELLED':
-        return { label: 'Dibatalkan', color: 'text-red-600 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50', Icon: XCircle, iconColor: '#dc2626' };
+        return { label: 'Dibatalkan', color: 'text-red-600 dark:text-red-450 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50', Icon: XCircle, iconColor: '#ef4444' };
       case 'FAILED':
-        return { label: 'Gagal', color: 'text-red-600 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50', Icon: XCircle, iconColor: '#dc2626' };
+        return { label: 'Gagal', color: 'text-red-600 dark:text-red-450 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50', Icon: XCircle, iconColor: '#ef4444' };
       default:
-        return { label: 'Menunggu', color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50', Icon: Clock, iconColor: '#d97706' };
+        return { label: 'Menunggu', color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50', Icon: Clock, iconColor: '#f59e0b' };
     }
   };
 
@@ -106,7 +106,7 @@ export default function CustomerOrders() {
         ) : orders.length === 0 ? (
           <View className="items-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
             <ClipboardList size={36} color="#cbd5e1" strokeWidth={1.5} />
-            <Text className="text-slate-400 dark:text-slate-500 text-sm font-bold mt-4">
+            <Text className="text-slate-400 dark:text-slate-300 text-sm font-bold mt-4">
               Belum ada riwayat pesanan
             </Text>
           </View>
@@ -127,7 +127,7 @@ export default function CustomerOrders() {
                     <Text className="text-slate-800 dark:text-white font-black text-sm" numberOfLines={1}>
                       {o.tenant.name}
                     </Text>
-                    <Text className="text-slate-400 dark:text-slate-500 text-[9px] mt-1 font-bold">
+                    <Text className="text-slate-400 dark:text-slate-400 text-[9px] mt-1 font-bold">
                       Order ID: {o.id.substring(0, 8).toUpperCase()}... • {new Date(o.orderDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                     </Text>
                   </View>
@@ -145,7 +145,7 @@ export default function CustomerOrders() {
                     </Text>
                     <View className="flex-row items-center">
                       <CalendarDays size={10} color="#94a3b8" />
-                      <Text className="text-slate-400 dark:text-slate-500 text-[10px] ml-1">
+                      <Text className="text-slate-400 dark:text-slate-300 text-[10px] ml-1">
                         {item.targetDate}
                       </Text>
                     </View>
@@ -155,7 +155,7 @@ export default function CustomerOrders() {
                 {/* Total & Action Row */}
                 <View className="flex-row justify-between items-center mt-4 pt-4 border-t border-slate-50 dark:border-slate-850">
                   <View>
-                    <Text className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Total Transaksi</Text>
+                    <Text className="text-[10px] text-slate-400 dark:text-slate-300 font-semibold uppercase tracking-wider">Total Transaksi</Text>
                     <Text className="text-slate-800 dark:text-white font-extrabold text-sm mt-0.5">
                       Rp {o.totalAmount.toLocaleString('id-ID')}
                     </Text>
@@ -170,7 +170,7 @@ export default function CustomerOrders() {
                     </TouchableOpacity>
                   ) : (
                     <View className="flex-row items-center gap-1">
-                      <Text className="text-slate-400 text-xs font-bold">Detail Pesanan</Text>
+                      <Text className="text-slate-400 dark:text-slate-300 text-xs font-bold">Detail Pesanan</Text>
                       <ChevronRight size={14} color="#cbd5e1" />
                     </View>
                   )}
