@@ -6,6 +6,7 @@ import {
   TextInput,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { customAlert } from '../../components/CustomAlert';
 import { useRouter } from 'expo-router';
