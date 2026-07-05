@@ -152,6 +152,15 @@ export default function RegisterScreen() {
     }
   };
 
+  const handleBack = () => {
+    setError(null);
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/login');
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-slate-950">
       <StatusBar style="auto" />
@@ -167,7 +176,7 @@ export default function RegisterScreen() {
           {/* Header */}
           <View className="bg-green-600 pt-10 pb-16 px-6">
             <TouchableOpacity
-              onPress={() => { setError(null); router.back(); }}
+              onPress={handleBack}
               className="w-10 h-10 bg-white/20 rounded-2xl items-center justify-center mb-6"
               accessibilityLabel="Kembali"
               accessibilityRole="button"
@@ -463,7 +472,7 @@ export default function RegisterScreen() {
 
             {/* Login link */}
             <TouchableOpacity
-              onPress={() => { setError(null); router.back(); }}
+              onPress={handleBack}
               className="items-center py-4 mb-8"
               accessibilityLabel="Sudah punya akun? Masuk di sini"
               accessibilityRole="link"

@@ -216,7 +216,16 @@ export default function CheckoutShipping() {
 
       {/* Header */}
       <View className="bg-green-600 px-5 py-4 flex-row items-center">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3 w-10 h-10 items-center justify-center bg-white/20 rounded-full">
+        <TouchableOpacity 
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/customer/cart' as any);
+            }
+          }} 
+          className="mr-3 w-10 h-10 items-center justify-center bg-white/20 rounded-full"
+        >
           <ArrowLeft size={20} color="white" />
         </TouchableOpacity>
         <Text className="text-white text-lg font-extrabold flex-1">Informasi Pengiriman</Text>
