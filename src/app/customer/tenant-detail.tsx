@@ -38,6 +38,7 @@ export default function TenantDetail() {
   const [menus, setMenus] = useState<Menu[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tenantInfo, setTenantInfo] = useState<{ description?: string | null; address?: string | null } | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -45,14 +46,20 @@ export default function TenantDetail() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load menus for today and tomorrow
-        const [todayMenus, tomorrowMenus] = await Promise.all([
+        // Load menus for today and tomorrow, plus tenant list to find details
+        const [todayMenus, tomorrowMenus, allTenants] = await Promise.all([
           api.getTenantMenus(id as string, today).catch(() => []),
-          api.getTenantMenus(id as string, tomorrow).catch(() => [])
+          api.getTenantMenus(id as string, tomorrow).catch(() => []),
+          api.getTenants().catch(() => [])
         ]);
 
         const combinedMenus = [...todayMenus, ...tomorrowMenus];
         setMenus(combinedMenus);
+
+        const currentTenant = allTenants.find((t: any) => t.id === id);
+        if (currentTenant) {
+          setTenantInfo(currentTenant);
+        }
 
         // Fetch reviews of tenant's menus. For simplicity, we can load all reviews and filter.
         // We will fetch reviews for each menu in parallel.
@@ -133,12 +140,12 @@ export default function TenantDetail() {
               </View>
             </View>
             <Text className="text-slate-500 dark:text-slate-400 text-xs mt-4 leading-4">
-              Penyedia katering sehat siap antar untuk daerah kampus dan sekitarnya. Terjamin bersih, higienis, dan lezat.
+              {tenantInfo?.description || 'Penyedia katering sehat siap antar untuk daerah kampus dan sekitarnya. Terjamin bersih, higienis, dan lezat.'}
             </Text>
             <View className="flex-row items-center mt-3 border-t border-slate-100 dark:border-slate-800 pt-3">
               <MapPin size={14} color="#64748b" />
               <Text className="text-slate-500 dark:text-slate-400 text-[10px] ml-1 flex-1 font-medium" numberOfLines={1}>
-                Kantin Gedung A, Kampus Pusat
+                {tenantInfo?.address || 'Kantin Gedung A, Kampus Pusat'}
               </Text>
             </View>
           </View>
