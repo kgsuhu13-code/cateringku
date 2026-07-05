@@ -36,6 +36,14 @@ export default function PaymentSimulatorScreen() {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/customer/orders' as any);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950">
       <StatusBar style="auto" />
@@ -43,7 +51,7 @@ export default function PaymentSimulatorScreen() {
       {/* Header */}
       <View className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex-row items-center">
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={handleBack}
           disabled={loading}
           accessibilityLabel="Kembali"
           accessibilityRole="button"
@@ -137,7 +145,7 @@ export default function PaymentSimulatorScreen() {
 
           {/* Cancel */}
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={handleBack}
             disabled={loading}
             activeOpacity={0.7}
             accessibilityLabel="Bayar nanti"
