@@ -1,4 +1,4 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { ThemeProvider, DefaultTheme, DarkTheme } from 'expo-router';
 import { useColorScheme, Platform } from 'react-native';
 import { useEffect } from 'react';
@@ -28,9 +28,12 @@ const PROTECTED_SEGMENTS = ['customer', 'tenant', 'admin', 'payment-simulator', 
 function AuthGuard() {
   const router = useRouter();
   const segments = useSegments();
+  const navigationState = useRootNavigationState();
   const { isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
+    if (!navigationState?.key) return; // Mencegah redirect sebelum navigation stack terpasang sepenuhnya
+
     const currentSegment = segments[0] as string | undefined;
     const isProtected = PROTECTED_SEGMENTS.includes(currentSegment ?? '');
 
@@ -50,7 +53,7 @@ function AuthGuard() {
         router.replace('/admin/dashboard');
       }
     }
-  }, [segments, isAuthenticated, user]);
+  }, [segments, isAuthenticated, user, navigationState?.key]);
 
   return null;
 }
